@@ -1,0 +1,55 @@
+version: '3.7'
+
+services:
+    php-fpm:
+        image: php:8.0.18-fpm
+        volumes:
+            - "./DocumentRoot:/var/www/html"
+        ports:
+            - 9000:9000
+        networks:
+            backend:
+                ipv4_address: 172.20.0.10
+
+    nginx:
+        image: nginx:1.21.6
+        ports:
+            - 8000:80
+        volumes:
+            - "./nginx:/etc/nginx/conf.d"
+        networks:
+            - backend
+            - frontend
+
+    mariadb:
+        image: mariadb:10.5.2
+        volumes:
+            - mariadb-volume:/var/lib/mysql
+        environment:
+            TZ: "Europe/Warsaw"
+            MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+            MYSQL_ROOT_PASSWORD: "rootpwd"
+            MYSQL_USER: 'testuser'
+            MYSQL_PASSWORD: 'testpassword'
+            MYSQL_DATABASE: 'testdb'
+        networks:
+            - backend
+    
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        links:
+            - 'mariadb:db'
+        ports:
+            - 6001:80
+        networks:
+            - backend
+
+volumes:
+    mariadb-volume:
+
+networks:
+    frontend:
+    backend:
+        ipam:
+            config:
+                - subnet: 172.20.0.0/16
